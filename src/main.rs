@@ -4,6 +4,7 @@ use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
 use serenity::all::VoiceState;
+use serenity::all::ChannelType;
 // use serenity::all::GuildId;
 // ----------------------------------
 
@@ -24,14 +25,19 @@ impl EventHandler for Handler {
 
     async fn voice_state_update(&self, ctx: Context, _old: Option<VoiceState>, new: VoiceState,) {
         
-        // if new channel is not none and new channel is equal to a channel
         if new.channel_id.is_some() && new.channel_id.unwrap().name(&ctx.http).await.unwrap() == "Join to Create"{
-            if let Err(why) = new.channel_id.unwrap().say(&ctx.http, "Quack!").await {
-                println!("Error sending message: {why:?}");
-            }
+
+            let guild_id = new.guild_id.unwrap();
+
+            let channel = guild_id.create_channel(&ctx.http, |c| c.name("Testies")
+                .kind(ChannelType::Voice).bitrate(64000).user_limit(10))
+                .await.unwrap();
+
+            let channel_id = channel.id;
+
+            guild_id.move_member(&ctx.http, new.user_id, channel_id).await.unwrap();
         }
     }
-
 }
 
 
